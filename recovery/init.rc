@@ -1,0 +1,333 @@
+#add by y65256 for B080 recovery
+import /init.recovery.${ro.hardware}.rc
+
+on early-init
+    start ueventd
+
+on init
+    export PATH /sbin
+    export PATH /sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin
+    export LD_LIBRARY_PATH /vendor/lib:/system/lib
+    export ANDROID_ROOT /system
+    export ANDROID_DATA /data
+    export EXTERNAL_STORAGE /sdcard    
+    # Begin£ºDTS2013101702268 added by h00197677 for factory test 2013/10/17
+    export SECONDARY_STORAGE /sdcard
+    # End£ºDTS2013101702268 added by h00197677 for factory test 2013/10/17 
+    export INTERNAL_STORAGE /data/share/0	
+    export BOOTCLASSPATH /system/framework/core.jar:/system/framework/core-junit.jar:/system/framework/bouncycastle.jar:/system/framework/ext.jar:/system/framework/framework.jar:/system/framework/android.policy.jar:/system/framework/services.jar:/system/framework/apache-xml.jar:/system/framework/filterfw.jar
+
+
+    symlink /system/etc /etc
+    mount debugfs /sys/kernel/debug /sys/kernel/debug
+
+# Right now vendor lives on the same filesystem as system,
+# but someday that may change.
+    symlink /system/vendor /vendor
+    mkdir /sdcard
+    mkdir /usb
+    mkdir /system
+    mkdir /data
+    #  DTS2012020704453   c00182898    2012/02/07   HOTA update system and cust image failed begin
+    mkdir /cust
+    #mkdir /splash2
+    #mkdir /3rdmodem
+    #  DTS2012020704453   c00182898    2012/02/07   HOTA update system and cust image failed end
+    mkdir /modem
+    mkdir /modem/modem_image
+    mkdir /modem/nvm1
+    mkdir /modem/nvm2
+    chown system system /dev/cpuctl
+    chown system system /dev/cpuctl/tasks
+    mkdir /cache
+    write /sys/module/block2mtd/parameters/block2mtd /dev/block/mmcblk0p9
+    mount /tmp /tmp tmpfs
+    # change nve device visit permission
+    wait /dev/nve0
+    chmod 0777 /dev/nve0
+    mkdir /tmpdata
+    mkdir /dsp:0 0777 root root
+#   mkdir /log 0644 root root
+    
+    write /sys/module/block2mtd/parameters/block2mtd /dev/block/mmcblk0p7
+    # change miscnff device visit permission
+    wait /dev/miscnff
+    chmod 0775 /dev/miscnff
+
+#DTS2013122802428,begin:add by fengpeng for charger speed , 2014-1-4 
+on fs_recovery_data
+    wait /dev/block/mmcblk0p29
+    exec /system/bin/e2fsck -y -f /dev/block/mmcblk0p29
+    mount ext4 /dev/block/mmcblk0p29 /data
+#DTS2013122802428,end:add by fengpeng for charger speed , 2014-1-4 
+
+on fs
+# mount mtd partitions
+    # Mount /system rw first to give the filesystem a chance to save a checkpoint
+    #mount yaffs2 mtd@system /system
+    #mount yaffs2 mtd@system /system ro remount
+    #mount yaffs2 mtd@userdata /data nosuid nodev
+    #mount yaffs2 mtd@cache /cache nosuid nodev
+
+    mount ext4 /dev/block/mmcblk0p27 /system
+    mount ext4 /dev/block/mmcblk0p27 /system ro remount
+#    wait /dev/block/platform/hi_mci.0/by-name/system
+#    exec /sbin/e2fsck_s -a -F -f /dev/block/platform/hi_mci.0/by-name/system
+#    exec /sbin/resize2fs_s -f /dev/block/platform/hi_mci.0/by-name/system
+#    mount ext4 /dev/block/platform/hi_mci.0/by-name/system /system wait ro
+#    mount ext4 /dev/block/platform/hi_mci.0/by-name/system /newsys wait ro
+
+    #mount ext4 /dev/block/platform/hi_mci.0/by-name/system /system wait rw
+    mount ext4 /dev/block/mmcblk0p22 /cache
+    #mount ext4 /dev/block/platform/hi_mci.0/by-name/cache /cache wait rw
+
+#DTS2012021301777 z00192785 2012/02/20 add vendor logo scheme begin
+    #mount ext4 /dev/block/platform/hi_mci.0/by-name/userdata /data wait rw
+
+    mount ext4 /dev/block/platform/hi_mci.0/by-name/cust /cust wait ro
+
+    #wait /dev/block/platform/hi_mci.0/by-name/cust
+    #exec /sbin/e2fsck_s -a -F -f /dev/block/platform/hi_mci.0/by-name/cust
+    #exec /sbin/resize2fs_s -f /dev/block/platform/hi_mci.0/by-name/cust
+    #mount ext4 /dev/block/platform/hi_mci.0/by-name/cust /cust wait rw
+
+#DTS2012021301777 z00192785 2012/02/20 add vendor logo scheme end
+
+    wait /dev/block/platform/hi_mci.0/by-name/oeminfo
+    start oeminfo_nvm
+
+    mount vfat /dev/block/mmcblk1p1 /sdcard
+    mount vfat /dev/block/mmcblk1 /sdcard
+    #mount vfat /dev/block/platform/hi_mci.0/mmcblk1p1 /sdcard
+    
+#   wait /dev/block/mmcblk0p22
+#   mount ext4 /dev/block/mmcblk0p22 /log
+#   mount ext4 /dev/block/mmcblk0p17 /dsp:0
+
+#   mount ext4 /dev/block/mmcblk0p16 /modem/modem_image
+    mount ext4 /dev/block/mmcblk0p14 /modem/nvm1
+    mount ext4 /dev/block/mmcblk0p15 /modem/nvm2
+    
+    #mount ext4 /dev/block/platform/hi_mci.0/by-name/splash2 /splash2 wait rw
+    #mount ext4 /dev/block/platform/hi_mci.0/by-name/3rdmodem /3rdmodem nosuid nodev
+
+    chmod 0777 /dsp:0	
+    chown root root /dsp:0
+
+    /dev/ttyUSB1   0777   root  root
+    /dev/ttyUSB0   0777   root  root
+    /dev/ttyACM0   0777   root  root
+    /dev/ttyACM1   0777   root  root
+    /dev/ttyACM2   0777   root  root
+    /dev/ttyACM3   0777   root  root
+
+#bq2416x_charger
+     chmod 0660 /sys/bus/i2c/devices/1-006b/enable_charger
+     chown system system /sys/bus/i2c/devices/1-006b/enable_charger
+
+on post-fs-data
+    # We chown/chmod /data again so because mount is run as root + defaults
+	chown system system /data
+	chmod 0771 /data
+
+	# Create dump dir and collect dumps.
+	# Do this before we mount cache so eventually we can use cache for
+	# storing dumps on platforms which do not have a dedicated dump partition.
+	mkdir /data/dontpanic 0750 root log
+
+	# Collect apanic data, free resources and re-arm trigger
+	copy /proc/apanic_console /data/dontpanic/apanic_console
+	chown root log /data/dontpanic/apanic_console
+	chmod 0640 /data/dontpanic/apanic_console
+
+	copy /proc/apanic_threads /data/dontpanic/apanic_threads
+	chown root log /data/dontpanic/apanic_threads
+	chmod 0640 /data/dontpanic/apanic_threads
+
+	#delete /data/.servicemanager_ready
+	rm /data/.servicemanager_ready
+
+	write /proc/apanic_console 1
+	#modify for uncheck root when power off
+	setprop hw.recovery.mode true
+
+on boot
+
+    ifup lo
+    hostname localhost
+    domainname localdomain
+
+    write /sys/devices/platform/ipps-v2.0/mcu "I 64"
+    write /sys/devices/platform/ipps-v2.0/mcu "I 112"
+    write /sys/devices/platform/ipps-v2.0/mcu "I 17"
+    write /sys/devices/platform/ipps-v2.0/mcu "I 49"
+
+    class_start default
+
+	#add by w00187765
+	mkdir /data/dumplog
+	chmod 777 /data/dumplog
+
+	mkdir /data/ap-log 0755 root system
+	mkdir /data/cp-log 0777 root system
+	mkdir /data/hifi-log 0755 root system
+	mkdir /data/memorydump 0775 root system
+
+    mkdir /data/gps
+    chmod 777 /data/gps
+service ueventd /sbin/ueventd
+    critical
+
+service recovery /sbin/recovery
+
+# DTS2011082903260  r00186667 2011/08/30 added begin
+service chargeservice /sbin/chargeservice
+# DTS2011082903260  r00186667 2011/08/30 added end
+service adbd /sbin/adbd recovery
+    disabled
+
+# init process will set usb mode depend on debug/MMI test/usb update/ship
+on property:sys.usb.config=modem,nmea,mass_storage,adb,diag
+    write /sys/class/android_usb/android0/enable 0
+    write /sys/class/android_usb/android0/iManufacturer $ro.product.manufacturer
+    write /sys/class/android_usb/android0/iProduct $ro.product.model
+    write /sys/class/android_usb/android0/idVendor 12d1
+    write /sys/class/android_usb/android0/idProduct 1035
+    write /sys/class/android_usb/android0/iSerial $ro.serialno
+    write /sys/class/android_usb/f_mass_storage/luns sdcard
+    write /sys/class/android_usb/f_mass_storage/lun/file none
+    write /sys/class/android_usb/android0/functions $sys.usb.config
+    write /sys/class/android_usb/android0/enable 1
+    start adbd
+    setprop sys.usb.state $sys.usb.config
+    
+#/* Begin£ºDTS2013100903629 added by h00197677 for factory use 20131009 */
+on property:sys.usb.config=vcom,adb
+    write /sys/class/android_usb/android0/enable 0
+    write /sys/class/android_usb/android0/idVendor 12d1
+    write /sys/class/android_usb/android0/idProduct 3650
+    write /sys/class/android_usb/android0/f_acm/instances 1
+    write /sys/class/android_usb/android0/f_acm/acm_enable 0
+    write /sys/class/android_usb/android0/functions acm,adb
+    write /sys/class/android_usb/android0/enable 1
+    start atcmdserver
+    start adbd
+    setprop sys.usb.state ${sys.usb.config}
+#/* End£ºDTS2013100903629 added by h00197677 for factory use 20131009 */
+
+on property:sys.usb.config=none
+    stop adbd
+    write /sys/class/android_usb/android0/enable 0
+    write /sys/class/android_usb/android0/bDeviceClass 0
+    setprop sys.usb.state $sys.usb.config
+
+#/* Begin£ºDTS2013100903629 modified by h00197677 for factory use 20131009 */
+on property:sys.usb.config=balong_debug,adb
+    write /sys/class/android_usb/android0/enable 0
+    write /sys/class/android_usb/android0/idVendor 12d1
+    write /sys/class/android_usb/android0/idProduct 1057
+    write /sys/class/android_usb/android0/iSerial $ro.serialno
+    write /sys/class/android_usb/android0/portNum  0xff00
+    write /sys/class/android_usb/android0/f_rndis/wceis  1
+    write /sys/class/android_usb/android0/f_acm/instances 7
+    write /sys/class/android_usb/android0/functions rndis,adb,acm
+    write /sys/class/android_usb/android0/enable 1
+    stop atcmdserver
+    start adbd
+    setprop sys.usb.state $sys.usb.config
+#/* End£ºDTS2013100903629 modified by h00197677 for factory use 20131009 */
+
+# Restart adbd so it can run as root
+on property:service.adb.root=1
+    write /sys/class/android_usb/android0/enable 0
+    restart adbd
+    write /sys/class/android_usb/android0/enable 1
+
+service console /system/bin/sh
+    console
+
+service nvm-server /system/bin/nvm_server
+socket nvm-ctl stream 777 root root
+    user root
+    group root
+    oneshot
+
+#/*DTS2013122802428, begin: fengpeng remove imc_poweron for v9r1*/
+#service imc_poweron /system/bin/imc_poweron
+#    user root
+##    group radio cache inet misc
+##    disabled
+#    oneshot
+#/*DTS2013122802428, end: fengpeng remove imc_poweron for v9r1*/    
+
+service hipse /system/etc/log/hipse_log.sh
+    class default 
+    user root
+    oneshot
+
+service exch /system/etc/log/android_panic.sh
+    class default 
+    user root
+    group root
+    oneshot
+
+#DTS2011091800177 c00182898 ATcmd Server source upload begin
+#/* Begin£ºDTS2013100903629 modified by h00197677 for factory use 20131009 */
+service atcmdserver  /system/bin/atcmdserver
+    user root
+    disabled
+#/* End£ºDTS2013100903629 modified by h00197677 for factory use 20131009 */
+#DTS2011091800177 c00182898 ATcmd Server source upload end
+
+#DTS2013071704869 z00241656 save kernel log begin
+#service klog /system/etc/klog.sh
+# user root
+#DTS2013071704869 z00241656 save kernel log end
+
+service oeminfo_nvm /sbin/oeminfo_nvm_server
+    critical
+    ioprio rt 4
+
+service modemlogcat_GU /system/bin/modemlogcat_balong -r 1 -p /data/factory-modemlog/
+    disabled
+    oneshot
+service gpsd  /system/bin/glgps -c /system/etc/gpsconfig.xml
+    socket gps seqpacket 777 root root
+    class main
+    user root
+
+service modemlogcat_GU /system/bin/modemlogcat_balong -r 10 -p /data/factory-modemlog/
+    class server
+    disabled
+    oneshot
+
+service modemlogcat_TL /system/bin/modemlogcat_lte -r 10 -p /data/factory-modemlog/
+    class server
+    disabled
+    oneshot
+
+service applogcat /system/bin/logcat -v threadtime -r 4096 -n 12 -f /data/android_logs/applogcat-log
+    class server
+    user root
+    disabled
+
+service kmsglogcat /system/bin/kmsgcat -r 4096 -n 6 -f /data/android_logs/kmsgcat-log
+    class server
+    user root
+    disabled
+
+service sleeplogcat /system/bin/sleeplogcat -r 4096 -n 6 -t 10 -p /data/android_logs/
+    class server
+    user root
+    disabled
+
+service rillogcat /system/bin/logcat -b radio -v threadtime -r 4096 -n 6 -f /data/android_logs/rillogcat-log
+    class server
+    user root
+    disabled
+
+
+service chargelogcat /system/bin/chargelogcat -r 4096 -n 6 -t 5 -p /data/android_logs/
+    class server
+    user root
+    disabled

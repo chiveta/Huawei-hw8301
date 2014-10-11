@@ -1,0 +1,20 @@
+[
+{
+"remote": "",
+"repository": "android_device_hw8301_k3v2mem",
+"target_path": "device/huawei/k3v2mem",
+"revision": ""
+},
+{
+"remote": "",
+"repository": "android_device_huawei_hw8301-common",
+"target_path": "device/huawei/hw8301-common",
+"revision": ""
+},
+{
+"remote": "",
+"repository": "",
+"target_path": "",
+"revision": ""
+}
+]
